@@ -26,7 +26,7 @@ class ProdConfig(GlobalConfig):
 class TestConfig(GlobalConfig):
     model_config = SettingsConfigDict(env_prefix="TEST_")
 
-    DB_FORCE_ROLL_BACK: bool = True
+    DB_FORCE_ROLL_BACK: bool = True  # This is used to reset the database
     DATABASE_URL: str = "sqlite:///test.db"
 
 

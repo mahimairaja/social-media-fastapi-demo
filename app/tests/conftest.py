@@ -1,11 +1,17 @@
+import os
 from typing import AsyncGenerator, Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
-from app.routers.post import comment_table, post_table
+os.environ["ENV_STATE"] = "test"
+
+from app.database import database  # noqa
+from app.main import app  # noqa: E402
+
+# noqa tells to no quality assure
+# E402 rule tells about import on top of the file
 
 
 @pytest.fixture(scope="session")
@@ -20,9 +26,9 @@ def client() -> Generator:
 
 @pytest.fixture(autouse=True)
 async def db() -> AsyncGenerator:
-    post_table.clear()
-    comment_table.clear()
+    await database.connect()
     yield
+    await database.disconnect()
 
 
 @pytest.fixture()
