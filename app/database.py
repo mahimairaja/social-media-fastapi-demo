@@ -1,6 +1,7 @@
 import databases
 import sqlalchemy
-from config import config
+
+from app.config import config
 
 # ---- The sqlalchemy modules is used to create the database schema ----
 metadata = sqlalchemy.MetaData()
