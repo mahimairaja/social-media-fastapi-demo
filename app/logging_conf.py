@@ -23,11 +23,14 @@ def configure_logging() -> None:
                 }
             },
             "loggers": {
+                "uvicorn": {"handlers": ["default"], "level": "INFO"},
                 "app": {  # root.storeapi.routers.post
                     "handlers": ["default"],
                     "level": "DEBUG" if isinstance(config, DevConfig) else "INFO",
                     "propagate": False,
                 },
+                "databases": {"handlers": ["default"], "level": "WARNING"},
+                "aiosqlite": {"handlers": ["default"], "level": "WARNING"},
             },
         }
     )
