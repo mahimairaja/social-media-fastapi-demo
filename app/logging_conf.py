@@ -1,7 +1,12 @@
 import logging
 from logging.config import dictConfig
 
-from app.config import DevConfig, config
+from app.config import DevConfig, ProdConfig, config
+
+HANDLERS = ["default", "rotating_file"]
+
+if isinstance(config, ProdConfig):
+    HANDLERS.append("logtail")
 
 
 def obfuscated(email: str, obfuscated_length: int) -> str:
@@ -60,6 +65,14 @@ def configure_logging() -> None:
                     "formatter": "console",
                     "filters": ["correlation_id", "email_obfuscation"],
                 },
+                "logtail": {
+                    "class": "logtail.LogtailHandler",
+                    "host": config.LOGTAIL_HOST,
+                    "level": "DEBUG",
+                    "formatter": "console",
+                    "filters": ["correlation_id", "email_obfuscation"],
+                    "source_token": config.LOGTAIL_API_KEY,
+                },
                 "rotating_file": {
                     "class": "logging.handlers.RotatingFileHandler",
                     "level": "DEBUG",
@@ -74,7 +87,7 @@ def configure_logging() -> None:
             "loggers": {
                 "uvicorn": {"handlers": ["default", "rotating_file"], "level": "INFO"},
                 "app": {  # root.storeapi.routers.post
-                    "handlers": ["default", "rotating_file"],
+                    "handlers": HANDLERS,
                     "level": "DEBUG" if isinstance(config, DevConfig) else "INFO",
                     "propagate": False,
                 },
