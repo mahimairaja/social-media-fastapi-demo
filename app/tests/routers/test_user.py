@@ -36,8 +36,8 @@ async def test_register_user_already_exist(
 async def test_login_user_not_exist(async_client: AsyncClient):
     response = await async_client.post(
         "/token",
-        json={
-            "email": "random@example.com",
+        data={
+            "username": "random@example.com",
             "password": "1234",
         },
     )
@@ -49,8 +49,8 @@ async def test_login_user_not_exist(async_client: AsyncClient):
 async def test_login_user(async_client: AsyncClient, registered_user: dict):
     response = await async_client.post(
         "/token",
-        json={
-            "email": registered_user["email"],
+        data={
+            "username": registered_user["email"],
             "password": registered_user["password"],
         },
     )
