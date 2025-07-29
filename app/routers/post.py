@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 from typing import Annotated, List
 
 import sqlalchemy
@@ -13,6 +14,7 @@ from app.models.post import (
     UserPost,
     UserPostIn,
     UserPostWithComments,
+    UserPostWithLikes,
 )
 from app.models.user import User
 from app.security import get_current_user
@@ -55,11 +57,26 @@ async def create_post(
     return {**data, "id": last_record_id}
 
 
-@router.get("/post", response_model=List[UserPost])
-async def get_all_posts():
+class PostSorting(str, Enum):
+    new = "new"
+    old = "old"
+    most_likes = "most_likes"
+
+
+@router.get("/post", response_model=List[UserPostWithLikes])
+async def get_all_posts(sorting: PostSorting = PostSorting.new):
     logger.info("Getting all posts")
 
-    query = post_table.select()
+    # query = post_table.select()
+
+    match sorting:
+        case PostSorting.old:
+            query = select_post_with_likes.order_by(post_table.c.id.asc())
+        case PostSorting.most_likes:
+            query = select_post_with_likes.order_by(sqlalchemy.desc("likes"))
+
+        case _:
+            query = select_post_with_likes.order_by(post_table.c.id.desc())
 
     logger.debug(query)
 

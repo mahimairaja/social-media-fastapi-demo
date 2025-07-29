@@ -78,8 +78,7 @@ async def test_create_post_expired_token(
         json={"body": "Test post"},
         headers={"Authorization": f"Bearer {token}"},
     )
-    print(f"\nResponse status: {response.status_code}")
-    print(f"Response body: {response.json()}")
+
     assert response.status_code == 401
     assert "token has expired" in response.json()["detail"]
 
@@ -119,7 +118,26 @@ async def test_get_all_posts(
     )
 
     assert response.status_code == 200
-    assert response.json() == [created_post]
+
+    assert response.json() == [{**created_post, "likes": 0}]
+
+
+@pytest.mark.anyio
+async def test_get_all_posts_sorting(
+    async_client: AsyncClient,
+    logged_in_token: str,
+):
+    await create_post("Test post 1", async_client, logged_in_token)
+    await create_post("Test post 2", async_client, logged_in_token)
+
+    response = await async_client.get("/post")
+    assert response.status_code == 200
+
+    data = response.json()
+    expected_order = [2, 1]
+
+    post_ids = [post["id"] for post in data]
+    assert post_ids == expected_order
 
 
 @pytest.mark.anyio
