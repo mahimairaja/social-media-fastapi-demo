@@ -3,10 +3,12 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.database import comment_table, database, post_table
+from app.database import comment_table, database, like_table, post_table
 from app.models.post import (
     Comment,
     CommentIn,
+    PostLike,
+    PostLikeIn,
     UserPost,
     UserPostIn,
     UserPostWithComments,
@@ -90,3 +92,25 @@ async def get_post_with_comments(post_id: int):
         "post": post,
         "comments": await get_comments_for_post(post_id),
     }
+
+
+@router.post("/like", response_model=PostLike, status_code=201)
+async def list_post(
+    like: PostLikeIn, current_user: Annotated[User, Depends(get_current_user)]
+):
+    logger.info("Liking post")
+
+    post = await find_post(like.post_id)
+
+    if not post:
+        raise HTTPException(detail="Post not found", status_code=404)
+
+    data = {**like.model_dump(), "user_id": current_user.id}
+
+    query = like_table.insert().values(data)
+
+    logger.debug(data)
+
+    last_record_id = await database.execute(query)
+
+    return {**data, "id": last_record_id}
