@@ -17,7 +17,7 @@ class UserPost(UserPostIn):
 class UserPostWithLikes(UserPost):
     model_config = ConfigDict(from_attributes=True)
 
-    likes: int
+    likes: int = 0
 
 
 class CommentIn(BaseModel):

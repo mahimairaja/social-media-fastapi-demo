@@ -11,7 +11,6 @@ from app.models.post import (
     CommentIn,
     PostLike,
     PostLikeIn,
-    UserPost,
     UserPostIn,
     UserPostWithComments,
     UserPostWithLikes,
@@ -45,7 +44,7 @@ async def find_post(post_id: int):
     return await database.fetch_one(query)
 
 
-@router.post("/post", response_model=UserPost, status_code=201)
+@router.post("/post", response_model=UserPostWithLikes, status_code=201)
 async def create_post(
     post: UserPostIn, current_user: Annotated[User, Depends(get_current_user)]
 ):

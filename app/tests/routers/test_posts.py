@@ -119,7 +119,7 @@ async def test_get_all_posts(
 
     assert response.status_code == 200
 
-    assert response.json() == [{**created_post, "likes": 0}]
+    assert response.json() == [created_post]
 
 
 @pytest.mark.anyio
