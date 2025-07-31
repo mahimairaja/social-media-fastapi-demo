@@ -36,11 +36,65 @@ async def test_access_tokens(type):
 
 
 @pytest.mark.anyio
-async def test_create_confirm_token():
-    token = security.create_confirm_token("123")
-    assert {"sub": "123", "type": "confirm"}.items() <= jwt.decode(
+@pytest.mark.parametrize("type", [("access"), ("confirm")])
+async def test_create_subject_for_token_type_valid_confirmation(type):
+    email = "test@email.net"
+    if type == "confirm":
+        token = security.create_confirm_token(email)
+    elif type == "access":
+        token = security.create_access_token(email)
+    assert security.get_subject_for_token_type(token, type) == email
+
+
+@pytest.mark.anyio
+async def test_create_subject_for_token_type_expired(mocker):
+    mocker.patch("app.security.access_token_expiry_minutes", return_value=-1)
+    email = "test@email.net"
+    token = security.create_access_token(email)
+
+    with pytest.raises(security.HTTPException) as exec_info:
+        security.get_subject_for_token_type(token, "access")
+
+    assert "token has expired" == exec_info.value.detail
+
+
+@pytest.mark.anyio
+async def test_create_subject_for_token_invalid():
+    token = "invalid token"
+
+    with pytest.raises(security.HTTPException) as exec_info:
+        security.get_subject_for_token_type(token, "access")
+
+    assert "Token invalid" == exec_info.value.detail
+
+
+@pytest.mark.anyio
+async def test_create_subject_for_token_type_missing_sub():
+    email = "test@email.net"
+    token = security.create_access_token(email)
+    payload = jwt.decode(
         token, key=security.SECRET_KEY, algorithms=[security.ALGORITHM]
-    ).items()
+    )
+
+    del payload["sub"]
+
+    token = jwt.encode(payload, key=security.SECRET_KEY, algorithm=security.ALGORITHM)
+
+    with pytest.raises(security.HTTPException) as exec_info:
+        security.get_subject_for_token_type(token, "access")
+
+    assert "Token is missing the sub - Email" == exec_info.value.detail
+
+
+@pytest.mark.anyio
+async def test_create_subject_for_token_type_wrong_type():
+    email = "test@email.net"
+    token = security.create_access_token(email)
+
+    with pytest.raises(security.HTTPException) as exec_info:
+        security.get_subject_for_token_type(token, "confirm")
+
+    assert "Invalid Token Type - expected confirm" == exec_info.value.detail
 
 
 @pytest.mark.anyio
