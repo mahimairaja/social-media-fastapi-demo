@@ -10,9 +10,35 @@ async def test_access_token_expiry_minutes():
 
 
 @pytest.mark.anyio
-async def test_create_access_token():
-    token = security.create_access_token("123")
-    assert {"sub": "123"}.items() <= jwt.decode(
+async def test_confirm_token_expiry_minutes():
+    assert 1440 == security.confirm_token_expiry_minutes()
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "type",
+    [
+        ("access",),
+        ("confirm",),
+    ],
+)
+async def test_access_tokens(type):
+    if type == "access":
+        token = security.create_access_token("123")
+        assert {"sub": "123", "type": type}.items() <= jwt.decode(
+            token, key=security.SECRET_KEY, algorithms=[security.ALGORITHM]
+        ).items()
+    elif type == "confirm":
+        token = security.create_confirm_token("123")
+        assert {"sub": "123", "type": type}.items() <= jwt.decode(
+            token, key=security.SECRET_KEY, algorithms=[security.ALGORITHM]
+        ).items()
+
+
+@pytest.mark.anyio
+async def test_create_confirm_token():
+    token = security.create_confirm_token("123")
+    assert {"sub": "123", "type": "confirm"}.items() <= jwt.decode(
         token, key=security.SECRET_KEY, algorithms=[security.ALGORITHM]
     ).items()
 
@@ -70,3 +96,11 @@ async def test_get_current_user(registered_user: dict):
 async def test_get_current_user_invalid_token():
     with pytest.raises(security.HTTPException):
         await security.get_current_user("Some random")
+
+
+@pytest.mark.anyio
+async def test_get_current_user_wrong_type_token(registered_user: dict):
+    token = security.create_confirm_token(registered_user["email"])
+
+    with pytest.raises(security.HTTPException):
+        await security.get_current_user(token)
