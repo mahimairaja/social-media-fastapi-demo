@@ -54,12 +54,12 @@ async def created_comment(async_client: AsyncClient, logged_in_token: str):
 
 @pytest.mark.anyio
 async def test_create_post(
-    async_client: AsyncClient, registered_user: dict, logged_in_token: str
+    async_client: AsyncClient, confirmed_user: dict, logged_in_token: str
 ):
     body = "Test Post"
     response = await async_client.post(
         "/post",
-        json={"body": body, "user_id": registered_user["id"]},
+        json={"body": body, "user_id": confirmed_user["id"]},
         headers={"Authorization": f"Bearer {logged_in_token}"},
     )
     assert response.status_code == 201
@@ -68,10 +68,10 @@ async def test_create_post(
 
 @pytest.mark.anyio
 async def test_create_post_expired_token(
-    async_client: AsyncClient, registered_user: dict, mocker
+    async_client: AsyncClient, confirmed_user: dict, mocker
 ):
     mocker.patch("app.security.access_token_expiry_minutes", return_value=-1)
-    token = security.create_access_token(registered_user["email"])
+    token = security.create_access_token(confirmed_user["email"])
 
     response = await async_client.post(
         "/post",
@@ -181,7 +181,7 @@ async def test_create_comment(
     async_client: AsyncClient,
     created_post: dict,
     logged_in_token: str,
-    registered_user: dict,
+    confirmed_user: dict,
 ):
     body = "Test Comment"
     response = await async_client.post(
@@ -189,7 +189,7 @@ async def test_create_comment(
         json={
             "body": body,
             "post_id": created_post["id"],
-            "user_id": registered_user["id"],
+            "user_id": confirmed_user["id"],
         },
         headers={"Authorization": f"Bearer {logged_in_token}"},
     )
